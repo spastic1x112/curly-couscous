@@ -26,16 +26,33 @@ def main():
         if args.values:
             values = args.values
         elif args.file:
-            with open(args.file, 'r') as f:
-                values = [int(line.strip()) for line in f if line.strip()]
+            values = []
+            try:
+                with open(args.file, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            values.append(int(line))
+                        if len(values) >= 624:
+                            break
+            except FileNotFoundError:
+                print(f"Error: File '{args.file}' not found.")
+                sys.exit(1)
+            except ValueError:
+                print(f"Error: File contains non-integer values.")
+                sys.exit(1)
 
         if len(values) < 624:
             print(f"Error: MT19937 requires 624 values, only got {len(values)}.")
             sys.exit(1)
 
         predictor = MT19937Predictor()
-        for v in values[:624]:
-            predictor.feed(v)
+        try:
+            for v in values[:624]:
+                predictor.feed(v)
+        except ValueError as e:
+            print(f"Error: {e}")
+            sys.exit(1)
 
         gen = predictor.get_random_instance()
         print("Reconstructed state successfully.")
