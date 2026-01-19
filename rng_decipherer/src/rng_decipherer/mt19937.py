@@ -24,6 +24,8 @@ class MT19937Predictor:
 
     def feed(self, value):
         """Feed a 32-bit output value to reconstruct the state."""
+        if not isinstance(value, int) or not (0 <= value <= 0xffffffff):
+            raise ValueError("MT19937 values must be 32-bit unsigned integers.")
         if len(self.state) < 624:
             self.state.append(untemper(value))
 
