@@ -22,26 +22,46 @@ def main():
     args = parser.parse_args()
 
     if args.command == "mt19937":
-        values = []
-        if args.values:
-            values = args.values
-        elif args.file:
-            with open(args.file, 'r') as f:
-                values = [int(line.strip()) for line in f if line.strip()]
-
-        if len(values) < 624:
-            print(f"Error: MT19937 requires 624 values, only got {len(values)}.")
-            sys.exit(1)
-
         predictor = MT19937Predictor()
-        for v in values[:624]:
-            predictor.feed(v)
+        try:
+            count = 0
+            if args.values:
+                for v in args.values:
+                    predictor.feed(v)
+                    count += 1
+                    if count >= 624:
+                        break
+            elif args.file:
+                with open(args.file, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            predictor.feed(int(line))
+                            count += 1
+                            if count >= 624:
+                                break
+            else:
+                print("Error: Either --values or --file must be provided.")
+                sys.exit(1)
 
-        gen = predictor.get_random_instance()
-        print("Reconstructed state successfully.")
-        print(f"Next 10 predicted 32-bit values:")
-        for _ in range(10):
-            print(gen.getrandbits(32))
+            if count < 624:
+                print(f"Error: MT19937 requires 624 values, only got {count}.")
+                sys.exit(1)
+
+            gen = predictor.get_random_instance()
+            print("Reconstructed state successfully.")
+            print(f"Next 10 predicted 32-bit values:")
+            for _ in range(10):
+                print(gen.getrandbits(32))
+        except FileNotFoundError:
+            print(f"Error: File not found: {args.file}")
+            sys.exit(1)
+        except ValueError as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            sys.exit(1)
 
     elif args.command == "lcg":
         if not args.values:
