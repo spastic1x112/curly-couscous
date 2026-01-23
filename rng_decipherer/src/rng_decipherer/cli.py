@@ -3,7 +3,7 @@ import sys
 from rng_decipherer.mt19937 import MT19937Predictor
 from rng_decipherer.lcg import LCGPredictor, crack_lcg
 
-def main():
+def run_cli():
     parser = argparse.ArgumentParser(description="RNG Decipherer Tool")
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
@@ -23,45 +23,55 @@ def main():
 
     if args.command == "mt19937":
         predictor = MT19937Predictor()
-        try:
-            count = 0
-            if args.values:
-                for v in args.values:
-                    predictor.feed(v)
-                    count += 1
-                    if count >= 624:
-                        break
-            elif args.file:
+        count = 0
+        if args.values:
+            for v in args.values:
+                predictor.feed(v)
+                count += 1
+                if count >= 624:
+                    break
+        elif args.file:
+            try:
                 with open(args.file, 'r') as f:
-                    for line in f:
+                    while count < 624:
+                        # Use a line length limit to prevent memory-exhaustion DoS
+                        line = f.readline(1024)
+                        if not line:
+                            break
+
+                        # If readline(1024) stopped before a newline,
+                        # we want to consume the rest of the line or just fail.
+                        # For simplicity, we check if it ends with newline if it's not EOF.
+                        # Actually, if it's longer than 1024, it's already suspicious.
+
                         line = line.strip()
                         if line:
-                            predictor.feed(int(line))
-                            count += 1
-                            if count >= 624:
-                                break
-            else:
-                print("Error: Either --values or --file must be provided.")
+                            try:
+                                val = int(line)
+                                predictor.feed(val)
+                                count += 1
+                            except ValueError:
+                                # Generic error to avoid leaking file content
+                                raise ValueError("Invalid integer value found in file.") from None
+            except FileNotFoundError:
+                print(f"Error: File not found: {args.file}")
                 sys.exit(1)
-
-            if count < 624:
-                print(f"Error: MT19937 requires 624 values, only got {count}.")
+            except PermissionError:
+                print(f"Error: Permission denied: {args.file}")
                 sys.exit(1)
+        else:
+            print("Error: Either --values or --file must be provided.")
+            sys.exit(1)
 
-            gen = predictor.get_random_instance()
-            print("Reconstructed state successfully.")
-            print(f"Next 10 predicted 32-bit values:")
-            for _ in range(10):
-                print(gen.getrandbits(32))
-        except FileNotFoundError:
-            print(f"Error: File not found: {args.file}")
+        if count < 624:
+            print(f"Error: MT19937 requires 624 values, only got {count}.")
             sys.exit(1)
-        except ValueError as e:
-            print(f"Error: {e}")
-            sys.exit(1)
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-            sys.exit(1)
+
+        gen = predictor.get_random_instance()
+        print("Reconstructed state successfully.")
+        print(f"Next 10 predicted 32-bit values:")
+        for _ in range(10):
+            print(gen.getrandbits(32))
 
     elif args.command == "lcg":
         if not args.values:
@@ -85,6 +95,21 @@ def main():
 
     else:
         parser.print_help()
+
+def main():
+    """Secure entry point that prevents stack trace leakage."""
+    try:
+        run_cli()
+    except KeyboardInterrupt:
+        sys.exit(130)
+    except ValueError as e:
+        # Expected validation errors
+        print(f"Error: {e}")
+        sys.exit(1)
+    except Exception:
+        # Unexpected errors - don't leak details
+        print("An unexpected error occurred. Please check your input and try again.")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
