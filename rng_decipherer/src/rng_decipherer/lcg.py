@@ -1,12 +1,14 @@
 import math
 
+
 def modInverse(a, m):
     """Calculates the modular multiplicative inverse of a modulo m."""
     g, x, y = extended_gcd(a, m)
     if g != 1:
-        raise Exception('modular inverse does not exist')
+        raise ValueError("modular inverse does not exist")
     else:
         return x % m
+
 
 def extended_gcd(a, b):
     """Extended Euclidean Algorithm."""
@@ -16,8 +18,11 @@ def extended_gcd(a, b):
         g, y, x = extended_gcd(b % a, a)
         return g, x - (b // a) * y, y
 
+
 class LCGPredictor:
     def __init__(self, a=None, c=None, m=None):
+        if m is not None and m <= 1:
+            raise ValueError("Modulus m must be greater than 1.")
         self.a = a
         self.c = c
         self.m = m
@@ -27,9 +32,15 @@ class LCGPredictor:
         self.last_value = value
 
     def predict_next(self):
-        if self.a is None or self.c is None or self.m is None or self.last_value is None:
+        if (
+            self.a is None
+            or self.c is None
+            or self.m is None
+            or self.last_value is None
+        ):
             raise ValueError("Parameters and last value must be known to predict next.")
         return (self.a * self.last_value + self.c) % self.m
+
 
 def crack_lcg(states):
     """
@@ -39,13 +50,24 @@ def crack_lcg(states):
     if len(states) < 6:
         raise ValueError("Need at least 6 states to crack LCG with unknown m.")
 
+    # Limit states to prevent DoS
+    if len(states) > 100:
+        states = states[:100]
+
     # Recover m
-    diffs = [states[i+1] - states[i] for i in range(len(states)-1)]
-    multiples = [abs(diffs[i+2] * diffs[i] - diffs[i+1]**2) for i in range(len(diffs)-2)]
+    diffs = [states[i + 1] - states[i] for i in range(len(states) - 1)]
+    multiples = [
+        abs(diffs[i + 2] * diffs[i] - diffs[i + 1] ** 2) for i in range(len(diffs) - 2)
+    ]
 
     m = multiples[0]
     for val in multiples[1:]:
         m = math.gcd(m, val)
+
+    if m <= 1:
+        raise ValueError(
+            "Could not recover LCG parameters: modulus m recovered as 0, 1 or invalid."
+        )
 
     # Recover a
     try:
