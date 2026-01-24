@@ -1,5 +1,6 @@
 from rng_decipherer.lcg import LCGPredictor, crack_lcg
 
+
 def test_lcg_cracking():
     # Parameters for a simple LCG
     a = 1103515245
@@ -21,6 +22,7 @@ def test_lcg_cracking():
     predictor = LCGPredictor(a=cracked_a, c=cracked_c, m=cracked_m)
     predictor.feed(states[5])
     assert predictor.predict_next() == states[6]
+
 
 if __name__ == "__main__":
     test_lcg_cracking()

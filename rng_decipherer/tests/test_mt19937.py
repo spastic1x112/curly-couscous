@@ -1,6 +1,7 @@
 import random
 from rng_decipherer.mt19937 import MT19937Predictor
 
+
 def test_mt19937_prediction():
     # Use a fixed seed for reproducibility in tests
     r = random.Random(42)
@@ -17,6 +18,7 @@ def test_mt19937_prediction():
     # Verify next 100 values
     for _ in range(100):
         assert predicted_gen.getrandbits(32) == r.getrandbits(32)
+
 
 def test_mt19937_invalid_input():
     predictor = MT19937Predictor()
@@ -45,6 +47,7 @@ def test_mt19937_invalid_input():
         assert "not a valid 32-bit unsigned integer" in str(e)
     else:
         assert False, "Should have raised ValueError for non-integer"
+
 
 if __name__ == "__main__":
     test_mt19937_prediction()
