@@ -7,3 +7,8 @@
 **Vulnerability:** CLI tool leaked sensitive file content in error messages and was vulnerable to memory-exhaustion DoS via extremely long lines in input files.
 **Learning:** Default Python exceptions (like `ValueError` from `int()`) often echo the invalid input, which can be sensitive if the input comes from a file. Additionally, `for line in f` can exhaust memory if a file has no newlines.
 **Prevention:** Use `raise ... from None` to suppress exception context when re-raising, and use `f.readline(limit)` to bound memory usage when reading potentially untrusted files. Wrap the CLI entry point in a generic try-except to prevent stack trace leakage.
+
+## 2025-05-16 - LCG Parameter Recovery DoS and Degenerate Modulus
+**Vulnerability:** LCG parameter cracking was vulnerable to DoS via large input lists and could produce or accept degenerate parameters (m <= 1) causing crashes.
+**Learning:** Algorithmic complexity of GCD calculations on large lists can be exploited for DoS. Furthermore, PRNG models must validate mathematical constraints (like m > 1) to prevent division/modulo by zero or degenerate behavior.
+**Prevention:** Limit input size for complex algorithms (e.g., first 100 states for LCG cracking) and strictly validate mathematical parameters in constructors and recovery functions.
