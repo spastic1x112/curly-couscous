@@ -31,6 +31,37 @@ def test_mt19937_file_leak():
         if os.path.exists(file_path):
             os.remove(file_path)
 
+def test_lcg_dos():
+    """Verify that crack_lcg limits the number of states to prevent DoS."""
+    from rng_decipherer.lcg import crack_lcg
+    import time
+
+    large_states = list(range(1000000))
+    start_time = time.time()
+    try:
+        crack_lcg(large_states)
+    except ValueError:
+        pass
+    end_time = time.time()
+
+    # Should be very fast
+    assert end_time - start_time < 0.1
+
+def test_lcg_invalid_modulus():
+    """Verify that crack_lcg and LCGPredictor handle m <= 1."""
+    from rng_decipherer.lcg import crack_lcg, LCGPredictor
+    import pytest
+
+    # Sequence that results in m=0
+    with pytest.raises(ValueError, match="Could not recover a valid modulus m > 1"):
+        crack_lcg([1, 1, 1, 1, 1, 1])
+
+    # Predictor with invalid m
+    predictor = LCGPredictor(a=1, c=1, m=1)
+    predictor.feed(0)
+    with pytest.raises(ValueError, match="Modulus m must be greater than 1"):
+        predictor.predict_next()
+
 def test_mt19937_large_line_dos():
     """Verify that a very long line does not cause memory issues (basic check)."""
     # This is more of a smoke test to ensure it doesn't just hang/crash on a 2KB line

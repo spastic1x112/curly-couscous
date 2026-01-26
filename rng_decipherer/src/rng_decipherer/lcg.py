@@ -29,6 +29,8 @@ class LCGPredictor:
     def predict_next(self):
         if self.a is None or self.c is None or self.m is None or self.last_value is None:
             raise ValueError("Parameters and last value must be known to predict next.")
+        if self.m <= 1:
+            raise ValueError("Modulus m must be greater than 1.")
         return (self.a * self.last_value + self.c) % self.m
 
 def crack_lcg(states):
@@ -39,6 +41,9 @@ def crack_lcg(states):
     if len(states) < 6:
         raise ValueError("Need at least 6 states to crack LCG with unknown m.")
 
+    # Limit to first 100 states to prevent Denial-of-Service (DoS)
+    states = states[:100]
+
     # Recover m
     diffs = [states[i+1] - states[i] for i in range(len(states)-1)]
     multiples = [abs(diffs[i+2] * diffs[i] - diffs[i+1]**2) for i in range(len(diffs)-2)]
@@ -46,6 +51,9 @@ def crack_lcg(states):
     m = multiples[0]
     for val in multiples[1:]:
         m = math.gcd(m, val)
+
+    if m <= 1:
+        raise ValueError("Could not recover a valid modulus m > 1. Insufficient data or non-LCG sequence.")
 
     # Recover a
     try:
