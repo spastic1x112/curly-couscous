@@ -39,6 +39,9 @@ def crack_lcg(states):
     if len(states) < 6:
         raise ValueError("Need at least 6 states to crack LCG with unknown m.")
 
+    # Limit number of states to prevent memory-exhaustion DoS
+    states = states[:100]
+
     # Recover m
     diffs = [states[i+1] - states[i] for i in range(len(states)-1)]
     multiples = [abs(diffs[i+2] * diffs[i] - diffs[i+1]**2) for i in range(len(diffs)-2)]
@@ -46,6 +49,9 @@ def crack_lcg(states):
     m = multiples[0]
     for val in multiples[1:]:
         m = math.gcd(m, val)
+
+    if m <= 1:
+        raise ValueError("Could not recover a valid modulus 'm'.")
 
     # Recover a
     try:
