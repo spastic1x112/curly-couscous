@@ -4,7 +4,7 @@ def modInverse(a, m):
     """Calculates the modular multiplicative inverse of a modulo m."""
     g, x, y = extended_gcd(a, m)
     if g != 1:
-        raise Exception('modular inverse does not exist')
+        raise ValueError('modular inverse does not exist')
     else:
         return x % m
 
@@ -39,6 +39,9 @@ def crack_lcg(states):
     if len(states) < 6:
         raise ValueError("Need at least 6 states to crack LCG with unknown m.")
 
+    # Limit states to prevent DoS
+    states = states[:100]
+
     # Recover m
     diffs = [states[i+1] - states[i] for i in range(len(states)-1)]
     multiples = [abs(diffs[i+2] * diffs[i] - diffs[i+1]**2) for i in range(len(diffs)-2)]
@@ -47,10 +50,13 @@ def crack_lcg(states):
     for val in multiples[1:]:
         m = math.gcd(m, val)
 
+    if m <= 1:
+        raise ValueError("Recovered modulus m is too small to be valid.")
+
     # Recover a
     try:
         a = (states[2] - states[1]) * modInverse(states[1] - states[0], m) % m
-    except Exception:
+    except ValueError:
         # If inverse doesn't exist, we might need more states or a different approach
         # for simplicity in this tool, we assume it works or fails.
         raise ValueError("Could not recover 'a', modular inverse failed.")
