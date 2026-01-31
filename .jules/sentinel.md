@@ -7,3 +7,8 @@
 **Vulnerability:** CLI tool leaked sensitive file content in error messages and was vulnerable to memory-exhaustion DoS via extremely long lines in input files.
 **Learning:** Default Python exceptions (like `ValueError` from `int()`) often echo the invalid input, which can be sensitive if the input comes from a file. Additionally, `for line in f` can exhaust memory if a file has no newlines.
 **Prevention:** Use `raise ... from None` to suppress exception context when re-raising, and use `f.readline(limit)` to bound memory usage when reading potentially untrusted files. Wrap the CLI entry point in a generic try-except to prevent stack trace leakage.
+
+## 2025-05-16 - LCG Parameter Validation and DoS Protection
+**Vulnerability:** Incorrect parameter handling in CLI and potential CPU-exhaustion DoS in LCG cracking.
+**Learning:** Using truthiness checks (`if args.a and ...`) for numeric command-line arguments can cause the tool to incorrectly ignore valid `0` values. Additionally, mathematical algorithms like LCG cracking should have input size limits to prevent attackers from providing massive datasets that consume excessive resources.
+**Prevention:** Always use explicit `is not None` checks for numeric CLI arguments. Enforce strict limits on the number of states processed in PRNG cracking functions (e.g., limit to 100 states).
