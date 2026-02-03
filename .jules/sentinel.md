@@ -7,3 +7,8 @@
 **Vulnerability:** CLI tool leaked sensitive file content in error messages and was vulnerable to memory-exhaustion DoS via extremely long lines in input files.
 **Learning:** Default Python exceptions (like `ValueError` from `int()`) often echo the invalid input, which can be sensitive if the input comes from a file. Additionally, `for line in f` can exhaust memory if a file has no newlines.
 **Prevention:** Use `raise ... from None` to suppress exception context when re-raising, and use `f.readline(limit)` to bound memory usage when reading potentially untrusted files. Wrap the CLI entry point in a generic try-except to prevent stack trace leakage.
+
+## 2025-05-16 - Algorithmic Complexity DoS and Param Validation in LCG Cracking
+**Vulnerability:** Denial-of-Service via unbounded input states and logic bypass due to truthiness checks on numeric parameters.
+**Learning:** Functions that perform iterative math (like GCD on large lists) must bound their input size to prevent CPU exhaustion. Additionally, using `if value:` for numeric parameters can lead to unintended logic branches if `0` is a valid input.
+**Prevention:** Explicitly slice input lists for mathematical routines to a safe maximum (e.g., `states[:100]`). Always use `is not None` when checking if optional numeric arguments were provided.
