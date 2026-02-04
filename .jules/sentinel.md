@@ -7,3 +7,8 @@
 **Vulnerability:** CLI tool leaked sensitive file content in error messages and was vulnerable to memory-exhaustion DoS via extremely long lines in input files.
 **Learning:** Default Python exceptions (like `ValueError` from `int()`) often echo the invalid input, which can be sensitive if the input comes from a file. Additionally, `for line in f` can exhaust memory if a file has no newlines.
 **Prevention:** Use `raise ... from None` to suppress exception context when re-raising, and use `f.readline(limit)` to bound memory usage when reading potentially untrusted files. Wrap the CLI entry point in a generic try-except to prevent stack trace leakage.
+
+## 2025-05-16 - LCG Cracking Denial-of-Service and Parameter Validation
+**Vulnerability:** Resource exhaustion (DoS) via unlimited state input and logic errors in parameter validation.
+**Learning:** GCD and large-number arithmetic in LCG cracking can be computationally expensive if the number of input states is unbounded. Additionally, using truthiness checks (e.g., `if args.c`) for numeric parameters can lead to incorrect program flow when `0` is a valid input, potentially bypassing intended security or logic paths.
+**Prevention:** Hard-limit the number of observed states used for PRNG cracking (e.g., limit to 100 for LCG). Always use `is not None` for numeric parameter validation to correctly handle zero-values. Validate that recovered mathematical parameters (like modulus 'm') meet minimum security/sanity requirements (m > 1).
