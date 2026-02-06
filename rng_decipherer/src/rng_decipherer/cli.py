@@ -78,7 +78,12 @@ def run_cli():
             print("Error: --values is required for LCG.")
             sys.exit(1)
 
-        if args.a and args.c and args.m:
+        # Limit number of values to prevent DoS/excessive memory usage
+        if len(args.values) > 100:
+            print("Error: Too many values provided. Maximum is 100.")
+            sys.exit(1)
+
+        if args.a is not None and args.c is not None and args.m is not None:
             predictor = LCGPredictor(a=args.a, c=args.c, m=args.m)
             predictor.feed(args.values[-1])
             print(f"Predicting next value with known parameters: {predictor.predict_next()}")

@@ -7,3 +7,8 @@
 **Vulnerability:** CLI tool leaked sensitive file content in error messages and was vulnerable to memory-exhaustion DoS via extremely long lines in input files.
 **Learning:** Default Python exceptions (like `ValueError` from `int()`) often echo the invalid input, which can be sensitive if the input comes from a file. Additionally, `for line in f` can exhaust memory if a file has no newlines.
 **Prevention:** Use `raise ... from None` to suppress exception context when re-raising, and use `f.readline(limit)` to bound memory usage when reading potentially untrusted files. Wrap the CLI entry point in a generic try-except to prevent stack trace leakage.
+
+## 2025-05-16 - LCG Security Enhancements and Parameter Validation
+**Vulnerability:** Denial-of-Service (DoS) via large input sequences and incorrect parameter handling for zero values.
+**Learning:** Algorithmic complexity in PRNG cracking can be exploited for DoS if input size is not bounded. Python's truthiness checks (e.g., `if args.c`) can erroneously skip valid parameters like `0`. Additionally, modular inverse calculations must account for negative results from subtraction in Python to avoid mathematical errors.
+**Prevention:** Impose strict limits on the number of observed states processed (e.g., 100). Use `is not None` for numeric parameter validation. Ensure non-negative inputs to modular arithmetic functions by using the modulo operator.
